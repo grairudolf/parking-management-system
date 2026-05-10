@@ -1,0 +1,22 @@
+# Java / Spring Boot
+/target
+*.class
+*.jar
+*.war
+
+# Maven
+.mvn/wrapper/maven-wrapper.jar
+
+# Credentials -never push this
+backend/src/main/resources/application.properties
+
+# VS Code
+.vscode/
+
+# Node / React
+frontend/node_modules/
+fronted/dist/
+
+# OS Files
+.DB_Store
+Thumbs.db
