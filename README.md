@@ -1,5 +1,5 @@
 # Parking Management System
-### OOP with Java — Group 14 | University of Buea
+### OOP with Java — Group 14 | FET.CE
 
 ---
 
