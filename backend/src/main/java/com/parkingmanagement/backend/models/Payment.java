@@ -1,3 +1,5 @@
+package com.parkingmanagement.backend.models;
+
 public class Payment {
 
     // Attributes

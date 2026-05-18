@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+package com.parkingmanagement.backend.models;
 
 public class Customer {
 

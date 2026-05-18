@@ -1,3 +1,5 @@
+package com.parkingmanagement.backend.models;
+
 public class ParkingSpot {
 
     // Attributes
@@ -7,8 +9,8 @@ public class ParkingSpot {
 
     // Constructor
     public ParkingSpot(String spotId,
-                       String location,
-                       boolean occupied) {
+            String location,
+            boolean occupied) {
 
         this.spotId = spotId;
         this.location = location;
