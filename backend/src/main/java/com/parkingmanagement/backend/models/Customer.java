@@ -1,68 +1,33 @@
-import java.util.ArrayList;
 package com.parkingmanagement.backend.models;
 
+import jakarta.persistence.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import java.util.ArrayList;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+@Table(name = "customers")
 public class Customer {
 
     // Attributes
-    private int customerId;
+    @Id
+    @Column(nullable = false)
+    private String customerId;
+    @Column(nullable = false)
     private String name;
+    @Column(nullable = false, unique = true)
     private String email;
+    @Column(nullable = false)
     private String password;
-    private int telephone;
+    @Column(nullable = false)
+    private String telephone;
 
     // Relationships
     private ArrayList<Vehicle> vehicles;
     private ArrayList<Reservation> reservations;
 
-    // Constructor
-    public Customer(int customerId,
-                    String name,
-                    String email,
-                    String password,
-                    int telephone) {
-
-        this.customerId = customerId;
-        this.name = name;
-        this.email = email;
-        this.password = password;
-        this.telephone = telephone;
-
-        vehicles = new ArrayList<>();
-        reservations = new ArrayList<>();
-    }
-
-    // Methods
-    public void addVehicle(Vehicle vehicle) {
-        vehicles.add(vehicle);
-    }
-
-    public void addReservation(Reservation reservation) {
-        reservations.add(reservation);
-    }
-
-    // Getters
-    public int getCustomerId() {
-        return customerId;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public int getTelephone() {
-        return telephone;
-    }
-
-    // Display Method
-    public void displayCustomer() {
-
-        System.out.println("Customer ID: " + customerId);
-        System.out.println("Name: " + name);
-        System.out.println("Email: " + email);
-        System.out.println("Telephone: " + telephone);
-    }
 }

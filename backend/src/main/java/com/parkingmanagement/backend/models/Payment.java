@@ -1,45 +1,29 @@
 package com.parkingmanagement.backend.models;
 
+import jakarta.persistence.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+@Table(name = "payments")
 public class Payment {
 
     // Attributes
-    private int paymentId;
+    @Id
+    @Column(nullable = false)
+    private String paymentId;
+    @Column(nullable = false)
     private double amount;
+    @Column(nullable = false)
     private String paymentMethod;
+    @Column(nullable = false)
     private String paymentStatus;
 
     // Relationship
     private Reservation reservation;
 
-    // Constructor
-    public Payment(int paymentId,
-                   double amount,
-                   String paymentMethod,
-                   String paymentStatus,
-                   Reservation reservation) {
-
-        this.paymentId = paymentId;
-        this.amount = amount;
-        this.paymentMethod = paymentMethod;
-        this.paymentStatus = paymentStatus;
-        this.reservation = reservation;
-    }
-
-    // Methods
-    public void processPayment() {
-        paymentStatus = "Paid";
-    }
-
-    // Display Method
-    public void displayPayment() {
-
-        System.out.println("Payment ID: " + paymentId);
-        System.out.println("Amount: " + amount);
-        System.out.println("Method: " + paymentMethod);
-        System.out.println("Status: " + paymentStatus);
-
-        System.out.println(
-            "Reservation ID: " + reservation.getReservationId()
-        );
-    }
 }
