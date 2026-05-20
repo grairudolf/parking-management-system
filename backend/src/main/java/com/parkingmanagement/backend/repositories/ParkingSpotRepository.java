@@ -6,5 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ParkingSpotRepository extends JpaRepository<ParkingSpot, String>{
-    ParkingSpot findByEmail(String email);
+    
 }
