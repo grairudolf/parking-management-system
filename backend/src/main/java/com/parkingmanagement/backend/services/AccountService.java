@@ -1,9 +1,9 @@
-package com.parkingmanagement.backend.service;
+package com.parkingmanagement.backend.services;
 
 import com.parkingmanagement.backend.models.Customer;
-import com.parkingmanagement.backend.repositories.Customer;
+import com.parkingmanagement.backend.repositories.CustomerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframwork.stereotype.Service;
+import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
@@ -18,14 +18,14 @@ public class AccountService {
     public String createAccount(String name, String email, String password, String telephone){
 
         // Check if customer with email already exits
-        Customer existing = customerRepository.findByEmail(eamil);
+        Customer existing = customerRepository.findByEmail(email);
         if(existing != null){
-            return "Email already in use."
+            return "Email already in use.";
         }
         
         // Create a new customer object
         Customer newCustomer = new Customer();
-        newCustomer.setCustomerId(UUID.randomUUID().toStirng());
+        newCustomer.setCustomerId(UUID.randomUUID().toString());
         newCustomer.setName(name);
         newCustomer.setEmail(email);
         newCustomer.setPassword(password);
@@ -34,7 +34,7 @@ public class AccountService {
         // Save to database
         customerRepository.save(newCustomer);
 
-        return "Account created successfully"
+        return "Account created successfully";
     }
 
     // Login class
