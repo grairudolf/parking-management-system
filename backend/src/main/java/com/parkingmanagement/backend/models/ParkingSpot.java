@@ -20,5 +20,9 @@ public class ParkingSpot {
     private String location;
     @Column(nullable = false)
     private boolean occupied;
+    public void freeSpot() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'freeSpot'");
+    }
 
 }
