@@ -16,26 +16,27 @@ import java.util.Optional;
 
 @Service
 public class ReservationService{
-      @Autowired
+
+    @Autowired
     private ReservationRepository reservationRepository;
 
     @Autowired
     private CustomerRepository customerRepository;
 
-        @Autowired
+    @Autowired
     private ParkingSpotRepository parkingspotRepository;
 
     public String createReservation(String customerID, String spotID, LocalDate date, LocalTime time){
          //Check If Customer Exist 
         var customerOpt = customerRepository.findById(customerID);
-        var spotOpt = reservationRepository.findById(spotID);
+        var spotOpt = parkingspotRepository.findById(spotID);
 
          //Check If Customer or Spot is found
         if(customerOpt.isEmpty() || spotOpt.isEmpty()){
             return "Error, Customer or Spot Not Found";
         }
 
-        Reservation spot = spotOpt.get();
+        ParkingSpot spot = spotOpt.get();
         if (spot.isOccupied()) {
             return "Error: Parking spot is already occupied.";
         }

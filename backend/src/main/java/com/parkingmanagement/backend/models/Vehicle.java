@@ -24,6 +24,8 @@ public class Vehicle {
     private String plateNumber;
 
     // Relationship
+    @ManyToOne
+    @JoinColumn(name = "customer_id", nullable = false)
     private Customer customer;
 
 }

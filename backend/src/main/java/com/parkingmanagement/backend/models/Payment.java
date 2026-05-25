@@ -24,6 +24,8 @@ public class Payment {
     private String paymentStatus;
 
     // Relationship
+    @ManyToOne
+    @JoinColumn(name = "reservation_id", nullable = false)
     private Reservation reservation;
 
 }
