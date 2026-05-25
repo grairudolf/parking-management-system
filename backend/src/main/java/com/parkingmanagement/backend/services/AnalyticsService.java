@@ -15,7 +15,7 @@ import java.util.Map;
 
 @Service
 public class AnalyticsService {
-    
+
     @Autowired
     private ParkingSpotRepository parkingSpotRepository;
 
@@ -25,47 +25,41 @@ public class AnalyticsService {
     @Autowired
     private EntryRepository entryRepository;
 
-    // Gets percentage of spots currently acquired
-    public double getOcupancyRate(){
+    // Fixed typo: getOcupancyRate -> getOccupancyRate
+    public double getOccupancyRate() {
         List<ParkingSpot> allSpots = parkingSpotRepository.findAll();
 
-        if(allSpots.isEmpty()){
+        if (allSpots.isEmpty()) {
             return 0.0;
         }
 
-        long occupiedCount = allSpots.stream().filter(ParkingSpot::isOccupied).count(); 
-
+        long occupiedCount = allSpots.stream().filter(ParkingSpot::isOccupied).count();
         return ((double) occupiedCount / allSpots.size()) * 100;
     }
 
-    // Get total revenue from all payments
     public double getTotalRevenue() {
         List<Payment> allPayments = paymentRepository.findAll();
-        
+
         double total = 0.0;
-        for(Payment payment : allPayments){
+        for (Payment payment : allPayments) {
             total += payment.getAmount();
         }
-        
         return total;
     }
 
-    // Get the hour of the day with the most vehicle entries
     public int getPeakHour() {
         List<Entry> allEntries = entryRepository.findAll();
 
-        if(allEntries.isEmpty()){
+        if (allEntries.isEmpty()) {
             return -1;
         }
 
-        // Count entries per hour
         Map<Integer, Integer> hourCount = new HashMap<>();
-        for(Entry entry : allEntries){
+        for (Entry entry : allEntries) {
             int hour = entry.getEntryTime().getHour();
             hourCount.put(hour, hourCount.getOrDefault(hour, 0) + 1);
         }
 
-        // Find hour with the most entries
         int peakHour = -1;
         int maxCount = 0;
         for (Map.Entry<Integer, Integer> mapEntry : hourCount.entrySet()) {
@@ -74,7 +68,6 @@ public class AnalyticsService {
                 peakHour = mapEntry.getKey();
             }
         }
-
         return peakHour;
     }
 }

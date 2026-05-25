@@ -1,5 +1,6 @@
 package com.parkingmanagement.backend.services;
 
+import com.parkingmanagement.backend.models.Customer;
 import com.parkingmanagement.backend.models.ParkingSpot;
 import com.parkingmanagement.backend.models.Reservation;
 import com.parkingmanagement.backend.repositories.ReservationRepository;
@@ -15,7 +16,7 @@ import java.time.LocalTime;
 import java.util.Optional;
 
 @Service
-public class ReservationService{
+public class ReservationService {
 
     @Autowired
     private ReservationRepository reservationRepository;
@@ -24,42 +25,53 @@ public class ReservationService{
     private CustomerRepository customerRepository;
 
     @Autowired
-    private ParkingSpotRepository parkingspotRepository;
+    private ParkingSpotRepository parkingSpotRepository;
 
-    public String createReservation(String customerID, String spotID, LocalDate date, LocalTime time){
-         //Check If Customer Exist 
-        var customerOpt = customerRepository.findById(customerID);
-        var spotOpt = parkingspotRepository.findById(spotID);
+    public String createReservation(String customerID, String spotID, LocalDate date, LocalTime time) {
 
-         //Check If Customer or Spot is found
-        if(customerOpt.isEmpty() || spotOpt.isEmpty()){
-            return "Error, Customer or Spot Not Found";
+        if (customerID == null || spotID == null) {
+            return "Error: Customer ID and Spot ID are required.";
+        }
+
+        // Check if customer and spot exist
+        Optional<Customer> customerOpt = customerRepository.findById(customerID);
+        Optional<ParkingSpot> spotOpt = parkingSpotRepository.findById(spotID);
+
+        if (customerOpt.isEmpty() || spotOpt.isEmpty()) {
+            return "Error: Customer or Spot not found.";
         }
 
         ParkingSpot spot = spotOpt.get();
+
+        // Check if spot is already occupied
         if (spot.isOccupied()) {
             return "Error: Parking spot is already occupied.";
         }
 
-
-        //Create a new reservation object
+        // Create new reservation
         Reservation newReservation = new Reservation();
         newReservation.setReservationId(UUID.randomUUID().toString());
-        newReservation.setSpotID(spotID);
-        newReservation.setDate(date);
-        newReservation.setTime(time);
+        newReservation.setCustomer(customerOpt.get());   // link the full Customer object
+        newReservation.setParkingSpot(spot);             // link the full ParkingSpot object
+        newReservation.setReservationDate(date.toString());
+        newReservation.setReservationTime(time.toString());
         newReservation.setStatus("Confirmed");
-        
-        // spot.occupySpot();
 
-        // Save to database
+        // Mark the spot as occupied (was commented out before — this is required)
+        spot.occupySpot();
+
+        // Save both
+        parkingSpotRepository.save(spot);
         reservationRepository.save(newReservation);
-        parkingspotRepository.save(spot);
 
-        return "Reservation Completed Successfully";
+        return "Reservation created successfully.";
     }
 
     public String cancelReservation(String reservationID) {
+        if (reservationID == null) {
+            return "Error: Reservation ID is required.";
+        }
+
         Optional<Reservation> reservationOpt = reservationRepository.findById(reservationID);
         if (reservationOpt.isEmpty()) {
             return "Error: Reservation not found.";
@@ -68,14 +80,14 @@ public class ReservationService{
         Reservation reservation = reservationOpt.get();
         reservation.setStatus("Cancelled");
 
-        Optional<ParkingSpot> spotOpt = parkingspotRepository.findById(reservation.getSpotID());
-        if (spotOpt.isPresent()) {
-            ParkingSpot spot = spotOpt.get();
+        // Free the parking spot via the linked object (not a raw String ID)
+        ParkingSpot spot = reservation.getParkingSpot();
+        if (spot != null) {
             spot.freeSpot();
-            parkingspotRepository.save(spot);
+            parkingSpotRepository.save(spot);
         }
 
         reservationRepository.save(reservation);
-        return "Reservation Cancelled Successfully";
+        return "Reservation cancelled successfully.";
     }
 }
