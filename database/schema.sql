@@ -1,4 +1,4 @@
-CREATE DATABASE parking_management;
+-- CREATE DATABASE parking_management;
 
 CREATE TABLE customers (
     customer_id VARCHAR(36) PRIMARY KEY,

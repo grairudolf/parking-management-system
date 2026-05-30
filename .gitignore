@@ -20,3 +20,6 @@ fronted/dist/
 # OS Files
 .DB_Store
 Thumbs.db
+
+# logs
+*.log

@@ -34,12 +34,14 @@ public class ReservationService {
         }
 
         // Check if customer and spot exist
-        Optional<Customer> customerOpt = customerRepository.findById(customerID);
         Optional<ParkingSpot> spotOpt = parkingSpotRepository.findById(spotID);
 
-        if (customerOpt.isEmpty() || spotOpt.isEmpty()) {
-            return "Error: Customer or Spot not found.";
+        if (spotOpt.isEmpty()) {
+            return "Error: Parking spot not found.";
         }
+
+        Customer customer = customerRepository.findById(customerID)
+                .orElseGet(() -> createGuestCustomer(customerID));
 
         ParkingSpot spot = spotOpt.get();
 
@@ -51,7 +53,7 @@ public class ReservationService {
         // Create new reservation
         Reservation newReservation = new Reservation();
         newReservation.setReservationId(UUID.randomUUID().toString());
-        newReservation.setCustomer(customerOpt.get());   // link the full Customer object
+        newReservation.setCustomer(customer);            // link the full Customer object
         newReservation.setParkingSpot(spot);             // link the full ParkingSpot object
         newReservation.setReservationDate(date.toString());
         newReservation.setReservationTime(time.toString());
@@ -65,6 +67,16 @@ public class ReservationService {
         reservationRepository.save(newReservation);
 
         return "Reservation created successfully.";
+    }
+
+    private Customer createGuestCustomer(String customerID) {
+        Customer customer = new Customer();
+        customer.setCustomerId(customerID);
+        customer.setName("Guest Customer");
+        customer.setEmail(customerID + "@parkcar.local");
+        customer.setPassword("password");
+        customer.setTelephone("0000000000");
+        return customerRepository.save(customer);
     }
 
     public String cancelReservation(String reservationID) {

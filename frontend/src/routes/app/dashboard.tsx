@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AppLayout } from "@/components/AppLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { getAnalyticsSummary, getAllSpots, getAllEntries } from "@/lib/api";
 import {
   Download, Plus, ParkingSquare, Calendar, Car, History, ExternalLink,
@@ -21,6 +22,8 @@ const statusStyle = (s: string) =>
   "bg-red-100 text-red-700";
 
 function Dashboard() {
+  const navigate = useNavigate();
+
   const { data: analytics, isLoading: analyticsLoading, isError: analyticsError } = useQuery({
     queryKey: ["analytics"],
     queryFn: getAnalyticsSummary,
@@ -47,6 +50,25 @@ function Dashboard() {
         .slice(0, 5)
     : [];
 
+  const handleExport = () => {
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      analytics,
+      spots: spots ?? [],
+      entries: entries ?? [],
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `parkcar-export-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    toast.success("Export downloaded.");
+  };
+
   return (
     <AppLayout>
       <div className="flex items-start justify-between mb-8">
@@ -55,8 +77,8 @@ function Dashboard() {
           <p className="text-muted-foreground mt-2">Real-time status of ParkCar Smart Facility Zone 4A</p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline"><Download className="h-4 w-4 mr-2" /> Export Data</Button>
-          <Button><Plus className="h-4 w-4 mr-2" /> New Reservation</Button>
+          <Button variant="outline" onClick={handleExport}><Download className="h-4 w-4 mr-2" /> Export Data</Button>
+          <Button onClick={() => navigate({ to: "/app/reserve" })}><Plus className="h-4 w-4 mr-2" /> New Reservation</Button>
         </div>
       </div>
 
@@ -81,7 +103,7 @@ function Dashboard() {
           </div>
           <div className="mt-4 space-y-1.5">
             <Progress value={spacesProgress} className="h-1.5" />
-            <div className="text-xs text-muted-foreground">{spacesProgress.toFixed(0)}% Capacity Remaining</div>
+            <div className="text-xs text-muted-foreground">{spots && spots.length > 0 ? `${spacesProgress.toFixed(0)}% Capacity Remaining` : "No spaces configured yet"}</div>
           </div>
         </Card>
 
@@ -154,7 +176,7 @@ function Dashboard() {
               {analyticsLoading ? (
                 <Skeleton className="h-4 w-32" />
               ) : analytics ? (
-                `Peak hour: ${analytics.peakHour}:00`
+                analytics.peakHour >= 0 ? `Peak hour: ${analytics.peakHour}:00` : "No traffic recorded yet"
               ) : (
                 "Average 4.2h duration"
               )}
@@ -167,7 +189,7 @@ function Dashboard() {
         <Card className="lg:col-span-2 p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold">Recent Activity</h2>
-            <button className="text-sm font-medium text-primary hover:underline">View All Logs</button>
+            <button onClick={() => navigate({ to: "/app/verification" })} className="text-sm font-medium text-primary hover:underline">View All Logs</button>
           </div>
           <div className="overflow-x-auto">
             {entriesLoading ? (
@@ -239,7 +261,7 @@ function Dashboard() {
 
           <Card className="p-0 overflow-hidden bg-sidebar text-sidebar-foreground relative">
             <div className="aspect-[16/9] bg-gradient-to-br from-sidebar to-primary/40 relative">
-              <button className="absolute top-3 right-3 h-9 w-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center">
+              <button onClick={() => navigate({ to: "/app/analytics" })} className="absolute top-3 right-3 h-9 w-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center">
                 <ExternalLink className="h-4 w-4" />
               </button>
               <div className="absolute bottom-4 left-4">

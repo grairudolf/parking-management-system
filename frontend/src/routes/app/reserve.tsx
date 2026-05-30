@@ -52,6 +52,8 @@ function Reserve() {
   });
 
   const [selectedSpotId, setSelectedSpotId] = useState("");
+  const [reservationError, setReservationError] = useState("");
+  const [reservationSuccess, setReservationSuccess] = useState("");
   const [duration, setDuration] = useState(4);
   const [date, setDate] = useState(() => {
     const today = new Date();
@@ -93,6 +95,8 @@ function Reserve() {
 
   const reservationMutation = useMutation({
     mutationFn: async () => {
+      setReservationError("");
+      setReservationSuccess("");
       if (!user) throw new Error("User not authenticated.");
       if (!selectedSpotId) throw new Error("Please select a spot.");
 
@@ -126,13 +130,16 @@ function Reserve() {
       await processPayment(latestRes.reservationId, "Card", totalAmount);
     },
     onSuccess: () => {
+      setReservationSuccess("Reservation confirmed and payment processed.");
       toast.success("Reservation confirmed and payment processed!");
       queryClient.invalidateQueries({ queryKey: ["spots"] });
       queryClient.invalidateQueries({ queryKey: ["reservations"] });
       setSelectedSpotId("");
     },
     onError: (error: any) => {
-      toast.error(error.message || "Reservation failed.");
+      const message = error.message || "Reservation failed.";
+      setReservationError(message);
+      toast.error(message);
     },
   });
 
@@ -170,7 +177,12 @@ function Reserve() {
               ) : spotsError ? (
                 <p className="text-sm text-destructive font-semibold">Failed to load parking spots.</p>
               ) : spots?.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">No spots configured yet.</p>
+                <div className="text-center py-8 space-y-3">
+                  <p className="text-sm text-muted-foreground">No spots configured yet.</p>
+                  <Button type="button" variant="outline" onClick={() => queryClient.invalidateQueries({ queryKey: ["spots"] })}>
+                    Refresh Floor Map
+                  </Button>
+                </div>
               ) : (
                 <>
                   {sectionA.length > 0 && (
@@ -296,8 +308,26 @@ function Reserve() {
                   </div>
                   <Check className="h-4 w-4" />
                 </div>
-                <button type="button" className="w-full mt-2 border-2 border-dashed rounded-md py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted/40 flex items-center justify-center gap-2"><Plus className="h-4 w-4" /> Add New Payment</button>
+                <button
+                  type="button"
+                  onClick={() => toast.info("Demo payment method selected. Real card setup is not connected yet.")}
+                  className="w-full mt-2 border-2 border-dashed rounded-md py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted/40 flex items-center justify-center gap-2"
+                >
+                  <Plus className="h-4 w-4" /> Add New Payment
+                </button>
               </div>
+
+              {reservationError && (
+                <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">
+                  {reservationError}
+                </div>
+              )}
+
+              {reservationSuccess && (
+                <div className="rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-sm font-medium text-primary">
+                  {reservationSuccess}
+                </div>
+              )}
 
               <div className="pt-3 border-t space-y-2 text-sm">
                 <div className="flex justify-between"><span className="text-muted-foreground">Rate ($4.00 / hour)</span><span>${subtotal.toFixed(2)}</span></div>
@@ -308,7 +338,7 @@ function Reserve() {
               <Button
                 type="submit"
                 className="w-full h-12 bg-sidebar hover:bg-sidebar/90 text-sidebar-foreground"
-                disabled={reservationMutation.isPending}
+                disabled={reservationMutation.isPending || spotsLoading || !selectedSpotId}
               >
                 {reservationMutation.isPending ? "Processing..." : "Pay and Reserve"} <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
