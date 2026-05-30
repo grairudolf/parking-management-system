@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { getUser } from "@/lib/auth";
-import { getAllSpots, createReservation, getAllReservations, processPayment } from "@/lib/api";
+import { addVehicle, createReservation, generateReceipt, getAllReservations, getAllSpots, processPayment, ReservationCheckout } from "@/lib/api";
 import { Map, Car, Plus, Clock, CreditCard, Check, Accessibility, Zap, ArrowRight, Info } from "lucide-react";
 
 export const Route = createFileRoute("/app/reserve")({
@@ -54,6 +54,10 @@ function Reserve() {
   const [selectedSpotId, setSelectedSpotId] = useState("");
   const [reservationError, setReservationError] = useState("");
   const [reservationSuccess, setReservationSuccess] = useState("");
+  const [checkout, setCheckout] = useState<ReservationCheckout | null>(null);
+  const [vehicleModel, setVehicleModel] = useState("Toyota Corolla");
+  const [vehicleType, setVehicleType] = useState("Sedan");
+  const [plateNumber, setPlateNumber] = useState("");
   const [duration, setDuration] = useState(4);
   const [date, setDate] = useState(() => {
     const today = new Date();
@@ -97,8 +101,14 @@ function Reserve() {
     mutationFn: async () => {
       setReservationError("");
       setReservationSuccess("");
+      setCheckout(null);
       if (!user) throw new Error("User not authenticated.");
       if (!selectedSpotId) throw new Error("Please select a spot.");
+      if (!plateNumber.trim() || !vehicleModel.trim() || !vehicleType.trim()) {
+        throw new Error("Enter your vehicle plate, model, and type before reserving.");
+      }
+
+      await addVehicle(vehicleModel.trim(), vehicleType.trim(), plateNumber.trim().toUpperCase(), user.customerId);
 
       // 1. Create reservation
       const res = await createReservation(user.customerId, selectedSpotId, date, time);
@@ -127,13 +137,24 @@ function Reserve() {
       })[0];
 
       // 3. Process payment
-      await processPayment(latestRes.reservationId, "Card", totalAmount);
+      const payment = await processPayment(latestRes.reservationId, "Card", totalAmount);
+      const receipt = await generateReceipt(payment.paymentId);
+
+      return {
+        reservationId: latestRes.reservationId,
+        paymentId: payment.paymentId,
+        receiptId: receipt.receiptId,
+        receiptNumber: receipt.receiptNumber,
+      };
     },
-    onSuccess: () => {
-      setReservationSuccess("Reservation confirmed and payment processed.");
-      toast.success("Reservation confirmed and payment processed!");
+    onSuccess: (result) => {
+      setCheckout(result);
+      setReservationSuccess(`Reserved, paid, and receipt generated: ${result.receiptNumber}`);
+      toast.success(`Receipt generated: ${result.receiptNumber}`);
       queryClient.invalidateQueries({ queryKey: ["spots"] });
       queryClient.invalidateQueries({ queryKey: ["reservations"] });
+      queryClient.invalidateQueries({ queryKey: ["receipts"] });
+      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
       setSelectedSpotId("");
     },
     onError: (error: any) => {
@@ -299,6 +320,35 @@ function Reserve() {
               </div>
 
               <div>
+                <div className="text-xs uppercase tracking-widest text-muted-foreground mb-2 font-semibold">Vehicle Details</div>
+                <div className="grid grid-cols-1 gap-2">
+                  <input
+                    value={plateNumber}
+                    onChange={(e) => setPlateNumber(e.target.value.toUpperCase())}
+                    placeholder="Plate number, e.g. ABC-1234"
+                    className="w-full border rounded-md px-3 py-2.5 text-sm bg-background"
+                    required
+                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      value={vehicleModel}
+                      onChange={(e) => setVehicleModel(e.target.value)}
+                      placeholder="Vehicle model"
+                      className="w-full border rounded-md px-3 py-2.5 text-sm bg-background"
+                      required
+                    />
+                    <input
+                      value={vehicleType}
+                      onChange={(e) => setVehicleType(e.target.value)}
+                      placeholder="Type"
+                      className="w-full border rounded-md px-3 py-2.5 text-sm bg-background"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div>
                 <div className="text-xs uppercase tracking-widest text-muted-foreground mb-2 font-semibold">Payment Method</div>
                 <div className="border-2 border-foreground rounded-md p-3 flex items-center gap-3">
                   <CreditCard className="h-5 w-5" />
@@ -326,6 +376,16 @@ function Reserve() {
               {reservationSuccess && (
                 <div className="rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-sm font-medium text-primary">
                   {reservationSuccess}
+                </div>
+              )}
+
+              {checkout && (
+                <div className="rounded-md border bg-muted/40 p-3 text-xs space-y-2">
+                  <div className="font-semibold text-sm">Gate pass details</div>
+                  <div><span className="text-muted-foreground">Reservation ID:</span> {checkout.reservationId}</div>
+                  <div><span className="text-muted-foreground">Receipt Number:</span> {checkout.receiptNumber}</div>
+                  <div><span className="text-muted-foreground">Payment ID:</span> {checkout.paymentId}</div>
+                  <div className="text-muted-foreground">At entry, use your plate number and reservation ID. The gate will give you an Entry ID for exit.</div>
                 </div>
               )}
 

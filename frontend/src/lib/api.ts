@@ -60,6 +60,13 @@ export interface Exit {
   entry: Entry;
 }
 
+export interface ReservationCheckout {
+  reservationId: string;
+  paymentId: string;
+  receiptId: string;
+  receiptNumber: string;
+}
+
 export interface AnalyticsSummary {
   occupancyRate: number;
   totalRevenue: number;
@@ -132,8 +139,8 @@ export async function cancelReservation(reservationID: string): Promise<{ succes
   });
 }
 
-export async function processPayment(reservationId: string, paymentMethod: string, amount: number): Promise<{ success: boolean; message: string }> {
-  return request<{ success: boolean; message: string }>("/api/payment/process", {
+export async function processPayment(reservationId: string, paymentMethod: string, amount: number): Promise<{ success: boolean; message: string; paymentId: string; amount: number }> {
+  return request<{ success: boolean; message: string; paymentId: string; amount: number }>("/api/payment/process", {
     method: "POST",
     body: JSON.stringify({ reservationId, paymentMethod, amount }),
   });
@@ -154,8 +161,12 @@ export async function generateReceipt(paymentId: string): Promise<Receipt> {
   });
 }
 
-export async function verifyEntry(plateNumber: string, reservationID: string): Promise<{ success: boolean; message: string }> {
-  return request<{ success: boolean; message: string }>("/api/entry/verify", {
+export async function verifyReceiptNumber(receiptNumber: string): Promise<{ valid: boolean; message: string; receipt?: Receipt }> {
+  return request<{ valid: boolean; message: string; receipt?: Receipt }>(`/api/receipt/verify/${receiptNumber}`);
+}
+
+export async function verifyEntry(plateNumber: string, reservationID: string): Promise<{ success: boolean; message: string; entryId: string; plateNumber: string; spotId: string }> {
+  return request<{ success: boolean; message: string; entryId: string; plateNumber: string; spotId: string }>("/api/entry/verify", {
     method: "POST",
     body: JSON.stringify({ plateNumber, reservationID }),
   });

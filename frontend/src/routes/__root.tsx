@@ -73,7 +73,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
+      { title: "Parking Management" },
       { name: "description", content: "React Love UI builds a functional frontend interface based on provided UI designs." },
       { name: "author", content: "Lovable" },
       { property: "og:title", content: "Lovable App" },

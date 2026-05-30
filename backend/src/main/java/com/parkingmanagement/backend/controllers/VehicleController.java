@@ -27,10 +27,21 @@ public class VehicleController {
     public ResponseEntity<?> add(@RequestBody Map<String, String> body) {
         Customer customer = customerRepository.findById(body.get("customerId")).orElse(null);
         if (customer == null) {
+            customer = new Customer();
+            customer.setCustomerId(body.get("customerId"));
+            customer.setName("Guest Customer");
+            customer.setEmail(body.get("customerId") + "@parkcar.local");
+            customer.setPassword("password");
+            customer.setTelephone("0000000000");
+            customerRepository.save(customer);
+        }
+        Vehicle existing = vehicleRepository.findByPlateNumber(body.get("plateNumber")).orElse(null);
+        if (existing != null) {
             Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "Customer not found.");
-            return ResponseEntity.badRequest().body(response);
+            response.put("success", true);
+            response.put("vehicleId", existing.getVehicleId());
+            response.put("message", "Vehicle already exists.");
+            return ResponseEntity.ok(response);
         }
         Vehicle vehicle = new Vehicle();
         vehicle.setVehicleId(UUID.randomUUID().toString());

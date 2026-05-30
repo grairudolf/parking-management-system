@@ -6,5 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ExitRepository extends JpaRepository<Exit, String>{
-    
+    boolean existsByEntryEntryId(String entryId);
 }

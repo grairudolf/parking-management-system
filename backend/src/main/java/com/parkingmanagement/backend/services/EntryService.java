@@ -26,29 +26,37 @@ public class EntryService {
     @Autowired
     private ReservationRepository reservationRepository;
 
-    public String verifyEntry(String plateNumber, String reservationID) {
+    public Entry verifyEntry(String plateNumber, String reservationID) {
 
         if(plateNumber == null || reservationID == null){
-            return "Error: Plate number and Reservation ID are required";
+            throw new IllegalArgumentException("Plate number and Reservation ID are required.");
         }
         
         // Find vehicle by plate number
         Optional<Vehicle> vehicleOpt = vehicleRepository.findByPlateNumber(plateNumber);
         if (vehicleOpt.isEmpty()) {
-            return "Error: Vehicle not found.";
+            throw new IllegalArgumentException("Vehicle not found. Add the vehicle before gate verification.");
         }
 
         // Find reservation
         Optional<Reservation> reservationOpt = reservationRepository.findById(reservationID);
         if (reservationOpt.isEmpty()) {
-            return "Error: Reservation not found.";
+            throw new IllegalArgumentException("Reservation not found.");
         }
 
         Reservation reservation = reservationOpt.get();
 
         // Reservation must be Confirmed
         if (!"Confirmed".equalsIgnoreCase(reservation.getStatus())) {
-            return "Error: Reservation is not confirmed.";
+            throw new IllegalArgumentException("Reservation is not confirmed.");
+        }
+
+        if (!reservation.getCustomer().getCustomerId().equals(vehicleOpt.get().getCustomer().getCustomerId())) {
+            throw new IllegalArgumentException("Vehicle does not belong to the reservation customer.");
+        }
+
+        if (entryRepository.existsByReservationReservationId(reservationID)) {
+            throw new IllegalArgumentException("This reservation has already been used for entry.");
         }
 
         // Create entry record
@@ -58,7 +66,6 @@ public class EntryService {
         entry.setVehicle(vehicleOpt.get());
         entry.setReservation(reservation);
 
-        entryRepository.save(entry);
-        return "Entry recorded successfully.";
+        return entryRepository.save(entry);
     }
 }

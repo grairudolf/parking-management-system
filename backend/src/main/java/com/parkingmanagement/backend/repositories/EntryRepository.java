@@ -7,4 +7,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface EntryRepository extends JpaRepository<Entry, String> {
+    boolean existsByReservationReservationId(String reservationId);
 }

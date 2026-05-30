@@ -32,11 +32,25 @@ public class ExitController {
 
     @PostMapping("/verify")
     public ResponseEntity<?> verify(@RequestBody Map<String, String> body) {
-        Entry entry = entryRepository.findById(body.get("entryId")).orElse(null);
+        String entryId = body.get("entryId");
+        if (entryId == null || entryId.trim().isEmpty()) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "Entry ID is required.");
+            return ResponseEntity.badRequest().body(response);
+        }
+
+        Entry entry = entryRepository.findById(entryId.trim()).orElse(null);
         if (entry == null) {
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
             response.put("message", "Entry not found.");
+            return ResponseEntity.badRequest().body(response);
+        }
+        if (exitRepository.existsByEntryEntryId(entry.getEntryId())) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "Entry ID has already been used for exit and is no longer valid.");
             return ResponseEntity.badRequest().body(response);
         }
         LocalDateTime exitTime = LocalDateTime.now();
@@ -58,6 +72,7 @@ public class ExitController {
         response.put("success", true);
         response.put("exitId", exit.getExitId());
         response.put("durationMinutes", exit.getDurationMinutes());
+        response.put("message", "Exit recorded. Entry ID is now invalid for future exits.");
         return ResponseEntity.ok(response);
     }
 

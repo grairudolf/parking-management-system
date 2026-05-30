@@ -7,10 +7,12 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { getAnalyticsSummary, getAllSpots, getAllEntries } from "@/lib/api";
+import { addVehicle, getAllEntries, getAllSpots, getAllVehicles, getAnalyticsSummary } from "@/lib/api";
+import { getUser } from "@/lib/auth";
 import {
   Download, Plus, ParkingSquare, Calendar, Car, History, ExternalLink,
 } from "lucide-react";
+import { useState, type FormEvent } from "react";
 
 export const Route = createFileRoute("/app/dashboard")({
   component: Dashboard,
@@ -23,6 +25,10 @@ const statusStyle = (s: string) =>
 
 function Dashboard() {
   const navigate = useNavigate();
+  const user = getUser();
+  const [vehicleModel, setVehicleModel] = useState("");
+  const [vehicleType, setVehicleType] = useState("");
+  const [vehiclePlate, setVehiclePlate] = useState("");
 
   const { data: analytics, isLoading: analyticsLoading, isError: analyticsError } = useQuery({
     queryKey: ["analytics"],
@@ -39,6 +45,11 @@ function Dashboard() {
     queryFn: getAllEntries,
   });
 
+  const { data: vehicles, refetch: refetchVehicles } = useQuery({
+    queryKey: ["vehicles"],
+    queryFn: getAllVehicles,
+  });
+
   const availableSpotsCount = spots ? spots.filter(s => !s.occupied).length : 0;
   const reservedSpotsCount = spots ? spots.filter(s => s.occupied).length : 0;
   const totalSpotsCount = spots ? spots.length : 1;
@@ -49,6 +60,27 @@ function Dashboard() {
         .sort((a, b) => new Date(b.entryTime).getTime() - new Date(a.entryTime).getTime())
         .slice(0, 5)
     : [];
+
+  const customerVehicles = vehicles?.filter(v => v.customer?.customerId === user?.customerId) ?? [];
+
+  const handleAddVehicle = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!user) return;
+    if (!vehicleModel.trim() || !vehicleType.trim() || !vehiclePlate.trim()) {
+      toast.error("Enter model, type, and plate number.");
+      return;
+    }
+    try {
+      await addVehicle(vehicleModel.trim(), vehicleType.trim(), vehiclePlate.trim().toUpperCase(), user.customerId);
+      setVehicleModel("");
+      setVehicleType("");
+      setVehiclePlate("");
+      await refetchVehicles();
+      toast.success("Vehicle saved.");
+    } catch (error: any) {
+      toast.error(error.message || "Could not save vehicle.");
+    }
+  };
 
   const handleExport = () => {
     const payload = {
@@ -241,6 +273,31 @@ function Dashboard() {
         </Card>
 
         <div className="space-y-5">
+          <Card className="p-6">
+            <h2 className="text-xl font-bold mb-4">My Vehicles</h2>
+            <form onSubmit={handleAddVehicle} className="grid grid-cols-1 gap-2 mb-4">
+              <input value={vehiclePlate} onChange={(e) => setVehiclePlate(e.target.value.toUpperCase())} placeholder="Plate number" className="border rounded-md px-3 py-2 text-sm bg-background" />
+              <div className="grid grid-cols-2 gap-2">
+                <input value={vehicleModel} onChange={(e) => setVehicleModel(e.target.value)} placeholder="Model" className="border rounded-md px-3 py-2 text-sm bg-background" />
+                <input value={vehicleType} onChange={(e) => setVehicleType(e.target.value)} placeholder="Type" className="border rounded-md px-3 py-2 text-sm bg-background" />
+              </div>
+              <Button type="submit" size="sm"><Plus className="h-4 w-4 mr-2" /> Save Vehicle</Button>
+            </form>
+            <div className="space-y-2">
+              {customerVehicles.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No vehicles saved yet.</p>
+              ) : customerVehicles.map(vehicle => (
+                <div key={vehicle.vehicleId} className="flex items-center justify-between rounded-md border px-3 py-2 text-sm">
+                  <div>
+                    <div className="font-semibold">{vehicle.plateNumber}</div>
+                    <div className="text-xs text-muted-foreground">{vehicle.model} · {vehicle.type}</div>
+                  </div>
+                  <Car className="h-4 w-4 text-primary" />
+                </div>
+              ))}
+            </div>
+          </Card>
+
           <Card className="p-6">
             <h2 className="text-xl font-bold mb-6">Occupancy Trend</h2>
             <div className="flex items-end justify-between h-32 gap-2">

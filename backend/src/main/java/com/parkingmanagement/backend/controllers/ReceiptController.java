@@ -35,6 +35,11 @@ public class ReceiptController {
             return ResponseEntity.badRequest().body(response);
         }
 
+        Receipt existing = receiptRepository.findByPaymentPaymentId(paymentId).orElse(null);
+        if (existing != null) {
+            return ResponseEntity.ok(existing);
+        }
+
         Receipt receipt = new Receipt();
         String receiptId = UUID.randomUUID().toString();
         receipt.setReceiptId(receiptId);
@@ -44,6 +49,21 @@ public class ReceiptController {
         receipt.setPayment(payment);
         receiptRepository.save(receipt);
         return ResponseEntity.ok(receipt);
+    }
+
+    @GetMapping("/verify/{receiptNumber}")
+    public ResponseEntity<?> verifyReceipt(@PathVariable String receiptNumber) {
+        Receipt receipt = receiptRepository.findByReceiptNumber(receiptNumber).orElse(null);
+        Map<String, Object> response = new HashMap<>();
+        if (receipt == null) {
+            response.put("valid", false);
+            response.put("message", "Receipt number not found.");
+            return ResponseEntity.status(404).body(response);
+        }
+        response.put("valid", true);
+        response.put("message", "Receipt is valid.");
+        response.put("receipt", receipt);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/all")

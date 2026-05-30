@@ -22,16 +22,18 @@ public class PaymentController {
         String reservationId = (String) body.get("reservationId");
         String paymentMethod = (String) body.get("paymentMethod");
         double amount = ((Number) body.get("amount")).doubleValue();
-        String result = paymentService.processPayment(reservationId, paymentMethod, amount);
         Map<String, Object> response = new HashMap<>();
-        if (result.startsWith("Error:")) {
-            response.put("success", false);
-            response.put("message", result);
-            return ResponseEntity.badRequest().body(response);
-        } else {
+        try {
+            Payment payment = paymentService.processPayment(reservationId, paymentMethod, amount);
             response.put("success", true);
-            response.put("message", result);
+            response.put("message", "Payment processed successfully.");
+            response.put("paymentId", payment.getPaymentId());
+            response.put("amount", payment.getAmount());
             return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException ex) {
+            response.put("success", false);
+            response.put("message", ex.getMessage());
+            return ResponseEntity.badRequest().body(response);
         }
     }
 

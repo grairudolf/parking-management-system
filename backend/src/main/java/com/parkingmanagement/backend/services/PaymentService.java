@@ -19,21 +19,21 @@ public class PaymentService {
     @Autowired
     private ReservationRepository reservationRepository;
 
-    public String processPayment(String reservationId, String paymentMethod, double amount) {
+    public Payment processPayment(String reservationId, String paymentMethod, double amount) {
 
         if (reservationId == null || paymentMethod == null) {
-            return "Error: Reservation ID and payment method are required.";
+            throw new IllegalArgumentException("Reservation ID and payment method are required.");
         }
 
         Optional<Reservation> optional = reservationRepository.findById(reservationId);
         if (optional.isEmpty()) {
-            return "Error: Reservation not found.";
+            throw new IllegalArgumentException("Reservation not found.");
         }
 
         Reservation reservation = optional.get();
 
         if ("Cancelled".equalsIgnoreCase(reservation.getStatus())) {
-            return "Error: Cannot process payment for a cancelled reservation.";
+            throw new IllegalArgumentException("Cannot process payment for a cancelled reservation.");
         }
 
         Payment newPayment = new Payment();
@@ -43,8 +43,7 @@ public class PaymentService {
         newPayment.setPaymentMethod(paymentMethod);
         newPayment.setPaymentStatus("Paid");
 
-        paymentRepository.save(newPayment);
-        return "Payment processed successfully.";
+        return paymentRepository.save(newPayment);
     }
 
     public Payment getPaymentByReservation(String reservationId) {

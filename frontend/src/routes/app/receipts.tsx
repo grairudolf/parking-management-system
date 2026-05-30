@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { getAllReceipts, generateReceipt, Receipt } from "@/lib/api";
+import { getAllReceipts, verifyReceiptNumber, Receipt } from "@/lib/api";
 import {
   Dialog,
   DialogContent,
@@ -25,10 +25,9 @@ export const Route = createFileRoute("/app/receipts")({
 });
 
 function Receipts() {
-  const queryClient = useQueryClient();
   const [selectedReceipt, setSelectedReceipt] = useState<Receipt | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [paymentId, setPaymentId] = useState("");
+  const [receiptNumber, setReceiptNumber] = useState("");
   const [genError, setGenError] = useState<string | null>(null);
 
   const { data: receipts, isLoading, isError, refetch } = useQuery({
@@ -43,19 +42,18 @@ function Receipts() {
   }, [receipts, selectedReceipt]);
 
   const generateMutation = useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async (number: string) => {
       setGenError(null);
-      return await generateReceipt(id);
+      return await verifyReceiptNumber(number);
     },
-    onSuccess: (newReceipt) => {
-      toast.success("Receipt generated!");
-      queryClient.invalidateQueries({ queryKey: ["receipts"] });
-      setSelectedReceipt(newReceipt);
-      setPaymentId("");
+    onSuccess: (result) => {
+      toast.success(result.message || "Receipt is valid.");
+      if (result.receipt) setSelectedReceipt(result.receipt);
+      setReceiptNumber("");
       setDialogOpen(false);
     },
     onError: (err: any) => {
-      setGenError(err.message || "Failed to generate receipt. Please check payment ID.");
+      setGenError(err.message || "Receipt was not found.");
     },
   });
 
@@ -75,38 +73,38 @@ function Receipts() {
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button className="bg-sidebar hover:bg-sidebar/90 text-sidebar-foreground">
-                <ReceiptText className="h-4 w-4 mr-2" /> Generate Receipt
+                <ReceiptText className="h-4 w-4 mr-2" /> Check Receipt
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>
-                <DialogTitle>Generate New Receipt</DialogTitle>
+                <DialogTitle>Check Receipt Number</DialogTitle>
                 <DialogDescription>
-                  Enter the Payment ID associated with your reservation to generate a receipt.
+                  Receipts are generated automatically when a reservation is paid. Enter a receipt number to verify it.
                 </DialogDescription>
               </DialogHeader>
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
-                  if (!paymentId.trim()) return;
-                  generateMutation.mutate(paymentId);
+                  if (!receiptNumber.trim()) return;
+                  generateMutation.mutate(receiptNumber);
                 }}
                 className="space-y-4 py-4"
               >
                 <div className="space-y-2">
-                  <label htmlFor="paymentIdInput" className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Payment ID</label>
+                  <label htmlFor="receiptNumberInput" className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Receipt Number</label>
                   <Input
-                    id="paymentIdInput"
-                    placeholder="Enter Payment ID"
-                    value={paymentId}
-                    onChange={(e) => setPaymentId(e.target.value)}
+                    id="receiptNumberInput"
+                    placeholder="REC-12345678"
+                    value={receiptNumber}
+                    onChange={(e) => setReceiptNumber(e.target.value.toUpperCase())}
                     required
                   />
                 </div>
                 {genError && <p className="text-destructive text-sm font-semibold">{genError}</p>}
                 <DialogFooter>
                   <Button type="submit" disabled={generateMutation.isPending}>
-                    {generateMutation.isPending ? "Generating..." : "Generate"}
+                    {generateMutation.isPending ? "Checking..." : "Check"}
                   </Button>
                 </DialogFooter>
               </form>
