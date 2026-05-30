@@ -5,6 +5,7 @@ export type AuthUser = {
   name: string;
   email: string;
   role: string;
+  customerId: string;
 };
 
 export function getUser(): AuthUser | null {
@@ -17,11 +18,12 @@ export function getUser(): AuthUser | null {
   }
 }
 
-export function login(email: string): AuthUser {
+export function login(userData: { name: string; email: string; customerId: string }): AuthUser {
   const user: AuthUser = {
-    name: "Alex Rivera",
-    email: email || "manager@urbaninfra.com",
-    role: "Fleet Manager",
+    name: userData.name,
+    email: userData.email,
+    role: "Customer",
+    customerId: userData.customerId,
   };
   localStorage.setItem(KEY, JSON.stringify(user));
   return user;

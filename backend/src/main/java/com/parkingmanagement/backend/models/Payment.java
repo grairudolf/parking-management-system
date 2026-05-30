@@ -1,9 +1,14 @@
 package com.parkingmanagement.backend.models;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
 @Data
 @NoArgsConstructor
@@ -12,20 +17,20 @@ import lombok.AllArgsConstructor;
 @Table(name = "payments")
 public class Payment {
 
-    // Attributes
     @Id
-    @Column(nullable = false)
+    @Column(name = "payment_id", nullable = false)
     private String paymentId;
+
     @Column(nullable = false)
     private double amount;
-    @Column(nullable = false)
+
+    @Column(name = "payment_method", nullable = false)
     private String paymentMethod;
-    @Column(nullable = false)
+
+    @Column(name = "payment_status", nullable = false)
     private String paymentStatus;
 
-    // Relationship
     @ManyToOne
     @JoinColumn(name = "reservation_id", nullable = false)
     private Reservation reservation;
-
 }

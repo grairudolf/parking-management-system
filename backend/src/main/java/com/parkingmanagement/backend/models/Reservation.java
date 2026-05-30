@@ -1,12 +1,15 @@
 package com.parkingmanagement.backend.models;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
-
-import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
 @Data
 @NoArgsConstructor
@@ -15,56 +18,25 @@ import lombok.AllArgsConstructor;
 @Table(name = "reservations")
 public class Reservation {
 
-    // Attributes
     @Id
-    @Column(nullable = false)
+    @Column(name = "reservation_id", nullable = false)
     private String reservationId;
-    @Column(nullable = false)
+
+    @Column(name = "reservation_date", nullable = false)
     private String reservationDate;
-    @Column(nullable = false)
+
+    @Column(name = "reservation_time", nullable = false)
     private String reservationTime;
+
     @Column(nullable = false)
     private String status;
 
-    // Relationships
+    @ManyToOne
+    @JoinColumn(name = "customer_id", nullable = false)
+    @JsonIgnoreProperties({"vehicles", "reservations", "password"})
     private Customer customer;
-    private Vehicle vehicle;
-    private ParkingSpot parkingSpot;
-    public void setspotID(String spotID) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'setspotID'");
-    }
-    public boolean isOccupied() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'isOccupied'");
-    }
-    public void setTime(String time) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'setTime'");
-    }
-    public void setDate(String date) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'setDate'");
-    }
-    public void setSpotID(String spotID) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'setSpotID'");
-    }
-    public void setDate(LocalDate date) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'setDate'");
-    }
-    public void setTime(LocalTime time) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'setTime'");
-    }
-    public void occupySpot() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'occupySpot'");
-    }
-    public String getSpotID() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getSpotID'");
-    }
 
+    @ManyToOne
+    @JoinColumn(name = "spot_id", nullable = false)
+    private ParkingSpot parkingSpot;
 }

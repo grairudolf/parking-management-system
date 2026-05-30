@@ -1,33 +1,44 @@
 package com.parkingmanagement.backend.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDateTime;
 
-// import jakarta.persistence.*;
-// import lombok.Data;
-// import lombok.NoArgsConstructor;
-// import lombok.AllArgsConstructor;
-// import java.util.ArrayList;
-
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+@Table(name = "entries")
 public class Entry {
 
-    public void setId(String uniqueID) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'setId'");
-    }
+    @Id
+    @Column(name = "entry_id", nullable = false)
+    private String entryId;
 
-    public void setEntryTime(LocalDateTime now) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'setEntryTime'");
-    }
+    @Column(name = "entry_time", nullable = false)
+    private LocalDateTime entryTime;
 
-    public void setReservation(Reservation reservation) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'setReservation'");
-    }
+    @ManyToOne
+    @JoinColumn(name = "vehicle_id", nullable = false)
+    @JsonIgnoreProperties({"customer"})
+    private Vehicle vehicle;
 
-    public void setVehicle(Vehicle vehicle) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'setVehicle'");
-    }
-    
+    @ManyToOne
+    @JoinColumn(name = "reservation_id", nullable = false)
+    @JsonIgnoreProperties({"customer.vehicles", "customer.reservations"})
+    private Reservation reservation;
+
+    @ManyToOne
+    @JoinColumn(name = "gate_id")
+    @JsonIgnoreProperties({"securityGuards"})
+    private Gate gate;
 }

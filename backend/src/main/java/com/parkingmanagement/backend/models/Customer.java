@@ -1,9 +1,16 @@
 package com.parkingmanagement.backend.models;
 
-import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,9 +21,8 @@ import java.util.List;
 @Table(name = "customers")
 public class Customer {
 
-    // Attributes
     @Id
-    @Column(nullable = false)
+    @Column(name = "customer_id", nullable = false)
     private String customerId;
 
     @Column(nullable = false)
@@ -25,20 +31,18 @@ public class Customer {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @JsonIgnore
     @Column(nullable = false)
     private String password;
-    
+
     @Column(nullable = false)
     private String telephone;
 
-    // // Relationships
-    // private ArrayList<Vehicle> vehicles;
-    // private ArrayList<Reservation> reservations;
-
+    @JsonIgnore
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL)
     private List<Vehicle> vehicles = new ArrayList<>();
 
+    @JsonIgnore
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL)
     private List<Reservation> reservations = new ArrayList<>();
-
 }

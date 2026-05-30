@@ -1,42 +1,37 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
-import { Car, Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { useState } from "react";
+import { Car, Mail, Lock, Eye, EyeOff, User, Phone, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Separator } from "@/components/ui/separator";
-import { login, getUser } from "@/lib/auth";
-import { loginUser } from "@/lib/api";
+import { toast } from "sonner";
+import { registerUser } from "@/lib/api";
 
-export const Route = createFileRoute("/")({
-  component: LoginPage,
+export const Route = createFileRoute("/register")({
+  component: RegisterPage,
 });
 
-function LoginPage() {
+function RegisterPage() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("manager@urbaninfra.com");
-  const [password, setPassword] = useState("password");
-  const [show, setShow] = useState(false);
-  const [remember, setRemember] = useState(true);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [telephone, setTelephone] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (getUser()) navigate({ to: "/app/dashboard" });
-  }, [navigate]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     try {
-      const response = await loginUser(email, password);
+      const response = await registerUser(name, email, password, telephone);
       if (response.success) {
-        login({ name: response.name, email: response.email, customerId: response.customerId });
-        navigate({ to: "/app/dashboard" });
+        toast.success("Account created! Please log in.");
+        navigate({ to: "/" });
       } else {
-        setError("Invalid email or password.");
+        setError(response.message);
       }
-    } catch (err) {
+    } catch (err: any) {
       setError("Network error. Please try again.");
     }
   };
@@ -52,12 +47,29 @@ function LoginPage() {
             <span className="text-2xl font-bold tracking-tight">ParkCar</span>
           </div>
 
-          <h1 className="text-4xl font-bold tracking-tight">Welcome Back</h1>
+          <h1 className="text-4xl font-bold tracking-tight">Create Account</h1>
           <p className="mt-3 text-muted-foreground">
-            Login to manage your parking system efficiently
+            Register to manage your parking system efficiently.
           </p>
 
           <form onSubmit={submit} className="mt-8 space-y-5">
+            <div className="space-y-2">
+              <Label htmlFor="name" className="text-xs font-semibold tracking-widest uppercase">
+                Full Name
+              </Label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="name"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="pl-10 h-12 bg-secondary/60"
+                  required
+                />
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="email" className="text-xs font-semibold tracking-widest uppercase">
                 Email Address
@@ -83,7 +95,7 @@ function LoginPage() {
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="password"
-                  type={show ? "text" : "password"}
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="pl-10 pr-10 h-12 bg-secondary/60"
@@ -91,52 +103,41 @@ function LoginPage() {
                 />
                 <button
                   type="button"
-                  onClick={() => setShow((s) => !s)}
+                  onClick={() => setShowPassword((s) => !s)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
-                  {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 text-sm">
-                <Checkbox checked={remember} onCheckedChange={(v) => setRemember(!!v)} />
-                Remember me
-              </label>
-              <a href="#" className="text-sm font-semibold text-primary hover:underline">
-                Forgot password?
-              </a>
+            <div className="space-y-2">
+              <Label htmlFor="telephone" className="text-xs font-semibold tracking-widest uppercase">
+                Telephone
+              </Label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="telephone"
+                  type="text"
+                  value={telephone}
+                  onChange={(e) => setTelephone(e.target.value)}
+                  className="pl-10 h-12 bg-secondary/60"
+                  required
+                />
+              </div>
             </div>
 
             {error && <p className="text-destructive text-sm font-medium">{error}</p>}
 
             <Button type="submit" className="w-full h-12 text-base">
-              Login to Dashboard <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-
-            <div className="flex items-center gap-4 py-2">
-              <Separator className="flex-1" />
-              <span className="text-xs text-muted-foreground tracking-widest">OR</span>
-              <Separator className="flex-1" />
-            </div>
-
-            <Button type="button" variant="outline" className="w-full h-12 text-base">
-              <span className="mr-2 text-lg font-bold">
-                <span style={{ color: "#4285F4" }}>G</span>
-                <span style={{ color: "#EA4335" }}>o</span>
-                <span style={{ color: "#FBBC05" }}>o</span>
-                <span style={{ color: "#4285F4" }}>g</span>
-                <span style={{ color: "#34A853" }}>l</span>
-                <span style={{ color: "#EA4335" }}>e</span>
-              </span>
-              Sign in with Infrastructure SSO
+              Register <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
 
             <p className="text-center text-sm text-muted-foreground pt-4">
-              Don't have an account?{" "}
-              <Link to="/register" className="font-semibold text-primary hover:underline">
-                Sign up/Register
+              Already have an account?{" "}
+              <Link to="/" className="font-semibold text-primary hover:underline">
+                Login
               </Link>
             </p>
           </form>

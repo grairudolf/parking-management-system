@@ -1,9 +1,14 @@
 package com.parkingmanagement.backend.models;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
 @Data
 @NoArgsConstructor
@@ -13,7 +18,7 @@ import lombok.AllArgsConstructor;
 public class SecurityGuard {
 
     @Id
-    @Column(nullable = false)
+    @Column(name = "guard_id", nullable = false)
     private String guardId;
 
     @Column(nullable = false)
@@ -29,4 +34,3 @@ public class SecurityGuard {
     @JoinColumn(name = "gate_id")
     private Gate gate;
 }
-

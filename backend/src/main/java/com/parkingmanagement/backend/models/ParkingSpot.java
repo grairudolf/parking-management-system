@@ -1,9 +1,12 @@
 package com.parkingmanagement.backend.models;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
 @Data
 @NoArgsConstructor
@@ -12,9 +15,8 @@ import lombok.AllArgsConstructor;
 @Table(name = "parking_spots")
 public class ParkingSpot {
 
-    // Attributes
     @Id
-    @Column(nullable = false)
+    @Column(name = "spot_id", nullable = false)
     private String spotId;
 
     @Column(nullable = false)
@@ -22,13 +24,12 @@ public class ParkingSpot {
 
     @Column(nullable = false)
     private boolean occupied;
-    
+
     public void freeSpot() {
-       this.occupied = false;
+        this.occupied = false;
     }
 
     public void occupySpot() {
         this.occupied = true;
     }
-
 }

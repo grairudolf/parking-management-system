@@ -4,6 +4,9 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useQuery } from "@tanstack/react-query";
+import { getAnalyticsSummary, getAllSpots, getAllEntries } from "@/lib/api";
 import {
   Download, Plus, ParkingSquare, Calendar, Car, History, ExternalLink,
 } from "lucide-react";
@@ -12,26 +15,38 @@ export const Route = createFileRoute("/app/dashboard")({
   component: Dashboard,
 });
 
-const stats = [
-  { icon: ParkingSquare, label: "Available Spaces", value: "142", chip: "+4% vs prev hr", chipTone: "good", footer: <Progress value={72} className="h-1.5" />, sub: "72% Capacity Remaining" },
-  { icon: Calendar, label: "Reserved Spots", value: "48", chip: "Next 12h", chipTone: "muted", sub: "+45 others waiting" },
-  { icon: Car, label: "Active Vehicles", value: "1,284", chip: "High Flow", chipTone: "bad", sub: "Tracking all active sessions" },
-  { icon: History, label: "Total Sessions", value: "8.4k", chip: "Live", chipTone: "good", sub: "Average 4.2h duration" },
-];
-
-const activity = [
-  { id: "ABC-1234", action: "Entry Verified", spot: "Gate B-01 / #A12", time: "09:42 AM", status: "Completed" },
-  { id: "XYZ-9876", action: "Exit Request", spot: "Gate A-02 / #B04", time: "09:38 AM", status: "Processing" },
-  { id: "TRK-4411", action: "Payment Due", spot: "Gate C-01 / #E11", time: "09:30 AM", status: "Alert" },
-  { id: "LPR-2022", action: "Spot Assigned", spot: "Gate B-01 / #A45", time: "09:25 AM", status: "Completed" },
-];
-
 const statusStyle = (s: string) =>
   s === "Completed" ? "bg-primary/10 text-primary" :
   s === "Processing" ? "bg-blue-100 text-blue-700" :
   "bg-red-100 text-red-700";
 
 function Dashboard() {
+  const { data: analytics, isLoading: analyticsLoading, isError: analyticsError } = useQuery({
+    queryKey: ["analytics"],
+    queryFn: getAnalyticsSummary,
+  });
+
+  const { data: spots, isLoading: spotsLoading, isError: spotsError } = useQuery({
+    queryKey: ["spots"],
+    queryFn: getAllSpots,
+  });
+
+  const { data: entries, isLoading: entriesLoading, isError: entriesError } = useQuery({
+    queryKey: ["entries"],
+    queryFn: getAllEntries,
+  });
+
+  const availableSpotsCount = spots ? spots.filter(s => !s.occupied).length : 0;
+  const reservedSpotsCount = spots ? spots.filter(s => s.occupied).length : 0;
+  const totalSpotsCount = spots ? spots.length : 1;
+  const spacesProgress = (availableSpotsCount / totalSpotsCount) * 100;
+
+  const sortedEntries = entries
+    ? [...entries]
+        .sort((a, b) => new Date(b.entryTime).getTime() - new Date(a.entryTime).getTime())
+        .slice(0, 5)
+    : [];
+
   return (
     <AppLayout>
       <div className="flex items-start justify-between mb-8">
@@ -46,28 +61,106 @@ function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
-        {stats.map((s) => {
-          const Icon = s.icon;
-          return (
-            <Card key={s.label} className="p-5">
-              <div className="flex items-start justify-between mb-6">
-                <div className="h-11 w-11 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Icon className="h-5 w-5 text-primary" />
-                </div>
-                <span className={`text-xs font-medium ${
-                  s.chipTone === "good" ? "text-primary" :
-                  s.chipTone === "bad" ? "text-destructive" : "text-muted-foreground"
-                }`}>{s.chip}</span>
-              </div>
-              <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">{s.label}</div>
-              <div className="text-4xl font-bold mt-1">{s.value}</div>
-              <div className="mt-4 space-y-1.5">
-                {s.footer}
-                <div className="text-xs text-muted-foreground">{s.sub}</div>
-              </div>
-            </Card>
-          );
-        })}
+        {/* Available Spaces */}
+        <Card className="p-5">
+          <div className="flex items-start justify-between mb-6">
+            <div className="h-11 w-11 rounded-lg bg-primary/10 flex items-center justify-center">
+              <ParkingSquare className="h-5 w-5 text-primary" />
+            </div>
+            <span className="text-xs font-medium text-primary">+4% vs prev hr</span>
+          </div>
+          <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Available Spaces</div>
+          <div className="text-4xl font-bold mt-1">
+            {spotsLoading ? (
+              <Skeleton className="h-8 w-24" />
+            ) : spotsError ? (
+              <span className="text-xs text-muted-foreground">Failed to load</span>
+            ) : (
+              availableSpotsCount
+            )}
+          </div>
+          <div className="mt-4 space-y-1.5">
+            <Progress value={spacesProgress} className="h-1.5" />
+            <div className="text-xs text-muted-foreground">{spacesProgress.toFixed(0)}% Capacity Remaining</div>
+          </div>
+        </Card>
+
+        {/* Reserved Spots */}
+        <Card className="p-5">
+          <div className="flex items-start justify-between mb-6">
+            <div className="h-11 w-11 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Calendar className="h-5 w-5 text-primary" />
+            </div>
+            <span className="text-xs font-medium text-muted-foreground">Next 12h</span>
+          </div>
+          <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Reserved Spots</div>
+          <div className="text-4xl font-bold mt-1">
+            {spotsLoading ? (
+              <Skeleton className="h-8 w-24" />
+            ) : spotsError ? (
+              <span className="text-xs text-muted-foreground">Failed to load</span>
+            ) : (
+              reservedSpotsCount
+            )}
+          </div>
+          <div className="mt-4 space-y-1.5">
+            <div className="text-xs text-muted-foreground">+45 others waiting</div>
+          </div>
+        </Card>
+
+        {/* Active Vehicles (Current Occupancy %) */}
+        <Card className="p-5">
+          <div className="flex items-start justify-between mb-6">
+            <div className="h-11 w-11 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Car className="h-5 w-5 text-primary" />
+            </div>
+            <span className="text-xs font-medium text-destructive">High Flow</span>
+          </div>
+          <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Current Occupancy</div>
+          <div className="text-4xl font-bold mt-1">
+            {analyticsLoading ? (
+              <Skeleton className="h-8 w-24" />
+            ) : analyticsError ? (
+              <span className="text-xs text-muted-foreground">Failed to load</span>
+            ) : (
+              `${(analytics?.occupancyRate || 0).toFixed(1)}%`
+            )}
+          </div>
+          <div className="mt-4 space-y-1.5">
+            <div className="text-xs text-muted-foreground">Tracking all active sessions</div>
+          </div>
+        </Card>
+
+        {/* Total Sessions (Total Revenue) */}
+        <Card className="p-5">
+          <div className="flex items-start justify-between mb-6">
+            <div className="h-11 w-11 rounded-lg bg-primary/10 flex items-center justify-center">
+              <History className="h-5 w-5 text-primary" />
+            </div>
+            <span className="text-xs font-medium text-primary">Live</span>
+          </div>
+          <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Total Revenue</div>
+          <div className="text-4xl font-bold mt-1">
+            {analyticsLoading ? (
+              <Skeleton className="h-8 w-24" />
+            ) : analyticsError ? (
+              <span className="text-xs text-muted-foreground">Failed to load</span>
+            ) : (
+              `$${(analytics?.totalRevenue || 0).toFixed(2)}`
+            )}
+          </div>
+          <div className="mt-4 space-y-1.5">
+            <div className="text-xs text-muted-foreground">
+              {analyticsLoading ? (
+                <Skeleton className="h-4 w-32" />
+              ) : analytics ? (
+                `Peak hour: ${analytics.peakHour}:00`
+              ) : (
+                "Average 4.2h duration"
+              )}
+            </div>
+          </div>
+        </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -77,30 +170,51 @@ function Dashboard() {
             <button className="text-sm font-medium text-primary hover:underline">View All Logs</button>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-muted-foreground border-b">
-                  <th className="pb-3 font-medium">Vehicle ID</th>
-                  <th className="pb-3 font-medium">Action</th>
-                  <th className="pb-3 font-medium">Gate / Spot</th>
-                  <th className="pb-3 font-medium">Timestamp</th>
-                  <th className="pb-3 font-medium">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {activity.map((a) => (
-                  <tr key={a.id} className="border-b last:border-0">
-                    <td className="py-4 font-semibold">{a.id}</td>
-                    <td className="py-4">{a.action}</td>
-                    <td className="py-4 text-muted-foreground">{a.spot}</td>
-                    <td className="py-4 text-muted-foreground">{a.time}</td>
-                    <td className="py-4">
-                      <Badge variant="secondary" className={statusStyle(a.status)}>{a.status}</Badge>
-                    </td>
+            {entriesLoading ? (
+              <div className="space-y-3">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+            ) : entriesError ? (
+              <p className="text-sm text-destructive font-semibold">Failed to load activity logs.</p>
+            ) : (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-muted-foreground border-b">
+                    <th className="pb-3 font-medium">Vehicle ID</th>
+                    <th className="pb-3 font-medium">Action</th>
+                    <th className="pb-3 font-medium">Gate / Spot</th>
+                    <th className="pb-3 font-medium">Timestamp</th>
+                    <th className="pb-3 font-medium">Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {sortedEntries.map((a) => (
+                    <tr key={a.entryId} className="border-b last:border-0">
+                      <td className="py-4 font-semibold">{a.vehicle?.plateNumber || "N/A"}</td>
+                      <td className="py-4">Entry Verified</td>
+                      <td className="py-4 text-muted-foreground">
+                        {a.reservation?.parkingSpot?.spotId || "N/A"}
+                      </td>
+                      <td className="py-4 text-muted-foreground">
+                        {new Date(a.entryTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </td>
+                      <td className="py-4">
+                        <Badge variant="secondary" className={statusStyle("Completed")}>Completed</Badge>
+                      </td>
+                    </tr>
+                  ))}
+                  {sortedEntries.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="py-4 text-center text-muted-foreground">No recent entries recorded.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            )}
           </div>
         </Card>
 
