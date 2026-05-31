@@ -1,9 +1,11 @@
 # Parking Management System
+
 ### OOP with Java — Group 14 | FET.CE
 
 ---
 
 ## Table of Contents
+
 1. [Project Overview](#project-overview)
 2. [Team Structure](#team-structure)
 3. [Folder Structure](#folder-structure)
@@ -23,24 +25,24 @@ A full-stack Parking Management System that handles customer account creation, p
 
 **Tech Stack**
 
-| Layer | Technology |
-|---|---|
+| Layer    | Technology              |
+| -------- | ----------------------- |
 | Frontend | React.js + Tailwind CSS |
-| Backend | Java + Spring Boot |
-| Database | PostgreSQL |
-| API | REST (JSON over HTTP) |
+| Backend  | Java + Spring Boot      |
+| Database | PostgreSQL              |
+| API      | REST (JSON over HTTP)   |
 
 ---
 
 ## Team Structure
 
-| Role | Members | Task |
-|---|---|---|
-| Design | 1 | Google Stitch UI mockups |
-| Models | 2 | Java class files from class diagram |
-| Backend Logic | 3 | Controllers, Services, Repositories |
-| Frontend | 2 | React pages and API connection |
-| Database | 2 | PostgreSQL tables and testing |
+| Role          | Members | Task                                |
+| ------------- | ------- | ----------------------------------- |
+| Design        | 1       | Google Stitch UI mockups            |
+| Models        | 2       | Java class files from class diagram |
+| Backend Logic | 3       | Controllers, Services, Repositories |
+| Frontend      | 2       | React pages and API connection      |
+| Database      | 2       | PostgreSQL tables and testing       |
 
 ---
 
@@ -88,18 +90,22 @@ parking-management-system/
 ## Prerequisites
 
 ### Everyone
+
 - [Git](https://git-scm.com/downloads)
 - A GitHub account
 
 ### Backend Team
+
 - [VS Code](https://code.visualstudio.com/)
-- [Java JDK](https://www.oracle.com/java/technologies/downloads/) 
+- [Java JDK](https://www.oracle.com/java/technologies/downloads/)
 
 ### Frontend Team
+
 - [Node.js LTS](https://nodejs.org/)
 - [VS Code](https://code.visualstudio.com/)
 
 ### Database Team
+
 - [PostgreSQL](https://www.postgresql.org/download/)
 - pgAdmin 4 (comes with PostgreSQL installer)
 
@@ -149,17 +155,21 @@ npm run dev
 Run both servers at the same time in two separate terminals.
 
 **Terminal 1 — Backend**
+
 ```bash
 cd backend
 ./mvnw spring-boot:run
 ```
+
 Runs at: `http://localhost:8080`
 
 **Terminal 2 — Frontend**
+
 ```bash
 cd frontend
 npm run dev
 ```
+
 Runs at: `http://localhost:3000`
 
 ---
@@ -179,6 +189,7 @@ PostgreSQL (port 5432)
 ```
 
 Example flow for Reserve Spot:
+
 1. React sends POST to `http://localhost:8080/api/reservation/create`
 2. Controller receives the request and calls the Service
 3. Service checks availability and creates the reservation
@@ -212,6 +223,7 @@ git push origin grairudolf/what-you-are-doing
 **Branch naming format:** `grairudolf/feature-description`
 
 Examples:
+
 ```
 max/customer-model
 pythagore/payment-service
@@ -223,6 +235,7 @@ emily/login-page
 ## Naming Conventions
 
 **Java**
+
 ```java
 // Classes: PascalCase
 public class ParkingSpot { }
@@ -233,6 +246,7 @@ public String getSpotNumber() { }
 ```
 
 **React**
+
 ```
 // Component files: PascalCase
 ReservationPage.jsx
@@ -240,6 +254,7 @@ LoginForm.jsx
 ```
 
 **Database**
+
 ```sql
 -- Tables and columns: snake_case
 CREATE TABLE parking_spots (
@@ -252,18 +267,18 @@ CREATE TABLE parking_spots (
 
 ## Responsibility Map
 
-| Name | Role | Files |
-|---|---|---|
-| [Name] | Design | design/mockups/ |
-| [Name] | Models | Customer.java, Account.java, Vehicle.java |
-| [Name] | Models | ParkingLot.java, ParkingSpot.java, Reservation.java, Payment.java, Receipt.java, Entry.java, Exit.java |
-| [Name] | Backend Logic | AccountController, AccountService |
-| [Name] | Backend Logic | ReservationController, ReservationService, PaymentController, PaymentService |
-| [Name] | Backend Logic | ReceiptController, ExitController, EntryController, their Services |
-| [Name] | Frontend | Login, Register, Reservation, Payment pages |
-| [Name] | Frontend | Receipt, Entry/Exit, Analytics pages |
-| [Name] | Database | schema.sql, database setup |
-| [Name] | Database | Database testing and validation |
+| Name   | Role          | Files                                                                                                  |
+| ------ | ------------- | ------------------------------------------------------------------------------------------------------ |
+| [Name] | Design        | design/mockups/                                                                                        |
+| [Name] | Models        | Customer.java, Account.java, Vehicle.java                                                              |
+| [Name] | Models        | ParkingLot.java, ParkingSpot.java, Reservation.java, Payment.java, Receipt.java, Entry.java, Exit.java |
+| [Name] | Backend Logic | AccountController, AccountService                                                                      |
+| [Name] | Backend Logic | ReservationController, ReservationService, PaymentController, PaymentService                           |
+| [Name] | Backend Logic | ReceiptController, ExitController, EntryController, their Services                                     |
+| [Name] | Frontend      | Login, Register, Reservation, Payment pages                                                            |
+| [Name] | Frontend      | Receipt, Entry/Exit, Analytics pages                                                                   |
+| [Name] | Database      | schema.sql, database setup                                                                             |
+| [Name] | Database      | Database testing and validation                                                                        |
 
 ---
 

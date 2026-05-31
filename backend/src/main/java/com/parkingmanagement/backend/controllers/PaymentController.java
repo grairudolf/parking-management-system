@@ -19,10 +19,22 @@ public class PaymentController {
 
     @PostMapping("/process")
     public ResponseEntity<?> process(@RequestBody Map<String, Object> body) {
+        Map<String, Object> response = new HashMap<>();
         String reservationId = (String) body.get("reservationId");
         String paymentMethod = (String) body.get("paymentMethod");
+        if(reservationId == null || paymentMethod == null){
+            response.put("success", false);
+            response.put("message", "Reservation ID and payment method are required.");
+            return ResponseEntity.badRequest().body(response);
+        }
+
+        if(body.get("amount") == null){
+            response.put("success", false);
+            response.put("message", "Amount is required.");
+            return ResponseEntity.badRequest().body(response);
+        }
+
         double amount = ((Number) body.get("amount")).doubleValue();
-        Map<String, Object> response = new HashMap<>();
         try {
             Payment payment = paymentService.processPayment(reservationId, paymentMethod, amount);
             response.put("success", true);
