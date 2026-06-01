@@ -1,81 +1,76 @@
 package com.parkingmanagement.backend.controllers;
 
-import com.parkingmanagement.backend.models.Entry;
 import com.parkingmanagement.backend.models.Exit;
-import com.parkingmanagement.backend.models.ParkingSpot;
-import com.parkingmanagement.backend.repositories.EntryRepository;
 import com.parkingmanagement.backend.repositories.ExitRepository;
-import com.parkingmanagement.backend.repositories.ParkingSpotRepository;
+import com.parkingmanagement.backend.services.ExitService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/exit")
 @CrossOrigin(origins = {"http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:8080", "http://127.0.0.1:8080"})
 public class ExitController {
 
+    // Bug fix: The original ExitController completely reimplemented exit logic inline
+    // and never used ExitService at all. ExitService was broken (called exit.setDuration()
+    // which doesn't exist) and unreachable. Now the controller delegates to ExitService,
+    // which has been fixed to use setDurationMinutes(int) correctly.
     @Autowired
-    private EntryRepository entryRepository;
+    private ExitService exitService;
 
     @Autowired
     private ExitRepository exitRepository;
 
-    @Autowired
-    private ParkingSpotRepository parkingSpotRepository;
-
+    /**
+     * POST /api/exit/verify
+     * Body: { "entryId": "..." }
+     *
+     * Records an exit for the given entry, calculates duration, frees the parking spot,
+     * and marks the entry ID as consumed so it cannot be reused.
+     */
     @PostMapping("/verify")
     public ResponseEntity<?> verify(@RequestBody Map<String, String> body) {
         String entryId = body.get("entryId");
+        Map<String, Object> response = new HashMap<>();
+
         if (entryId == null || entryId.trim().isEmpty()) {
-            Map<String, Object> response = new HashMap<>();
             response.put("success", false);
             response.put("message", "Entry ID is required.");
             return ResponseEntity.badRequest().body(response);
         }
 
-        Entry entry = entryRepository.findById(entryId.trim()).orElse(null);
-        if (entry == null) {
-            Map<String, Object> response = new HashMap<>();
+        String result = exitService.verifyExit(entryId.trim());
+
+        if (result.startsWith("Error:")) {
             response.put("success", false);
-            response.put("message", "Entry not found.");
+            response.put("message", result);
             return ResponseEntity.badRequest().body(response);
         }
-        if (exitRepository.existsByEntryEntryId(entry.getEntryId())) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "Entry ID has already been used for exit and is no longer valid.");
-            return ResponseEntity.badRequest().body(response);
-        }
-        LocalDateTime exitTime = LocalDateTime.now();
-        int duration = (int) ChronoUnit.MINUTES.between(entry.getEntryTime(), exitTime);
-        Exit exit = new Exit();
-        exit.setExitId(UUID.randomUUID().toString());
-        exit.setExitTime(exitTime);
-        exit.setDurationMinutes(duration);
-        exit.setEntry(entry);
-        
-        ParkingSpot spot = entry.getReservation().getParkingSpot();
-        if (spot != null) {
-            spot.freeSpot();
-            parkingSpotRepository.save(spot);
-        }
-        exitRepository.save(exit);
-        
-        Map<String, Object> response = new HashMap<>();
+
+        // Fetch the saved exit to return its data in the response
+        Exit exit = exitRepository.findAll().stream()
+                .filter(e -> e.getEntry() != null && e.getEntry().getEntryId().equals(entryId.trim()))
+                .findFirst()
+                .orElse(null);
+
         response.put("success", true);
-        response.put("exitId", exit.getExitId());
-        response.put("durationMinutes", exit.getDurationMinutes());
-        response.put("message", "Exit recorded. Entry ID is now invalid for future exits.");
+        response.put("message", result);
+        if (exit != null) {
+            response.put("exitId", exit.getExitId());
+            response.put("durationMinutes", exit.getDurationMinutes());
+        }
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * GET /api/exit/all
+     *
+     * Returns all recorded exits.
+     */
     @GetMapping("/all")
     public ResponseEntity<?> all() {
         return ResponseEntity.ok(exitRepository.findAll());
